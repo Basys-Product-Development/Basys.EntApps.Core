@@ -14,7 +14,7 @@ variables:
   packageOutput: '$(Build.ArtifactStagingDirectory)/packages'
   # Set the feed name exactly as it appears in Azure Artifacts
   nugetFeed: 'Basys.EntApps.Core'
-  projectPath: '**/*.sln'
+  projectPath: 'Basys.EntApps.Core.sln'
 
 steps:
 - task: UseDotNet@2

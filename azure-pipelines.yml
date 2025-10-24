@@ -28,7 +28,7 @@ steps:
   inputs:
     nuGetServiceConnections: 'Basys.EntApps.Core'   # <-- service connection name
 
-- script: dotnet restore '$(nuget)'
+- script: dotnet restore '$(projectPath)'
   displayName: 'Restore NuGet dependencies'
 
 - script: dotnet build $(projectPath) --configuration $(buildConfiguration) --no-restore

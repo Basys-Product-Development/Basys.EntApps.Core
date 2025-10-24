@@ -13,7 +13,8 @@ variables:
   buildConfiguration: 'Release'
   packageOutput: '$(Build.ArtifactStagingDirectory)/packages'
   # Set the feed name exactly as it appears in Azure Artifacts
-  nugetFeed: 'Basys.EntApps.Core'  
+  nugetFeed: 'Basys.EntApps.Core'
+  nuget: 'nuget.config'
 
 steps:
 # ----------------------------
@@ -28,19 +29,19 @@ steps:
 # ----------------------------
 # 2️⃣ Restore dependencies
 # ----------------------------
-#- script: dotnet restore
-#  displayName: 'Restore NuGet dependencies'
+- script: dotnet restore '$(nuget)'
+  displayName: 'Restore NuGet dependencies'
 
 # ----------------------------
 # 3️⃣ Build the project
 # ----------------------------
-- script: dotnet build --configuration $(buildConfiguration) --no-restore
+- script: dotnet build --configuration $(nuget) --no-restore
   displayName: 'Build project'
 
 # ----------------------------
 # 4️⃣ Pack the project into a NuGet package
 # ----------------------------
-- script: dotnet pack --configuration $(buildConfiguration) --no-build \
+- script: dotnet pack --configuration $(nuget) --no-build \
           --output $(packageOutput)
   displayName: 'Create NuGet package'
 

@@ -28,8 +28,17 @@ steps:
   inputs:
     nuGetServiceConnections: 'Basys.EntApps.Core'   # <-- service connection name
 
-- script: dotnet restore '$(projectPath)'
-  displayName: 'Restore NuGet dependencies'
+#- script: dotnet restore '$(projectPath)'
+#  displayName: 'Restore NuGet dependencies'
+
+# Retore Nuget Packages
+- task: DotNetCoreCLI@2
+  inputs:
+    command: "restore"
+    projects: "$(projectPath)"
+    feedsToUse: "select"
+    vstsFeed: "44b649ef-0194-49de-bb1c-23d1459e80ee"
+  displayName: "Restore NuGet packages"
 
 - script: dotnet build $(projectPath) --configuration $(buildConfiguration) --no-restore
   displayName: 'Build project'

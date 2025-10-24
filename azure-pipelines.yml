@@ -1,34 +1,71 @@
+# ============================
+# Azure DevOps Pipeline
+# Build + Pack + Publish NuGet (.nupkg) to Azure Artifacts
+# ============================
+
 trigger:
-- main
+- main     # or your branch name
 
 pool:
-  vmImage: 'windows-latest'
+  vmImage: 'windows-latest'   # or 'ubuntu-latest'
+
+variables:
+  buildConfiguration: 'Release'
+  packageOutput: '$(Build.ArtifactStagingDirectory)/packages'
+  # Set the feed name exactly as it appears in Azure Artifacts
+  nugetFeed: 'Basys.EntApps.Core'  
 
 steps:
+# ----------------------------
+# 1️⃣ Install .NET SDK
+# ----------------------------
 - task: UseDotNet@2
+  displayName: 'Install .NET SDK'
   inputs:
     packageType: 'sdk'
-    version: '8.x'  # .NET 8 SDK
+    version: '8.x'    # adjust to your .NET version
 
+# ----------------------------
+# 2️⃣ Restore dependencies
+# ----------------------------
 - script: dotnet restore
-  displayName: 'Restore dependencies'
+  displayName: 'Restore NuGet dependencies'
 
-- script: dotnet build --configuration Release
+# ----------------------------
+# 3️⃣ Build the project
+# ----------------------------
+- script: dotnet build --configuration $(buildConfiguration) --no-restore
   displayName: 'Build project'
 
-- script: dotnet pack --configuration Release --output $(Build.ArtifactStagingDirectory)
+# ----------------------------
+# 4️⃣ Pack the project into a NuGet package
+# ----------------------------
+- script: dotnet pack --configuration $(buildConfiguration) --no-build \
+          --output $(packageOutput)
   displayName: 'Create NuGet package'
 
-- task: PublishBuildArtifacts@1
-  inputs:
-    pathToPublish: '$(Build.ArtifactStagingDirectory)'
-    artifactName: 'nupkg'
-
+# ----------------------------
+# 5️⃣ Authenticate to Azure Artifacts feed
+# ----------------------------
 - task: NuGetAuthenticate@1
+  displayName: 'Authenticate to Azure Artifacts feed'
   inputs:
-    nuGetServiceConnections: 'Basys.EntApps.Core'
+    nuGetServiceConnections: 'Basys.EntApps.Core'   # <-- service connection name
 
-- script: dotnet nuget push "$(Build.ArtifactStagingDirectory)/*.nupkg" \
-          --source "MyCompanyPackages" \
-          --api-key Basys.EntApps.Core
-  displayName: 'Publish package to Azure Artifacts'
+# ----------------------------
+# 6️⃣ Push package to Azure Artifacts
+# ----------------------------
+- script: |
+    dotnet nuget push "$(packageOutput)/*.nupkg" \
+      --source "$(nugetFeed)" \
+      --api-key Basys.EntApps.Core
+  displayName: 'Publish package to Azure Artifacts feed'
+
+# ----------------------------
+# 7️⃣ (Optional) Publish .nupkg as pipeline artifact
+# ----------------------------
+- task: PublishBuildArtifacts@1
+  displayName: 'Save NuGet package as build artifact'
+  inputs:
+    pathToPublish: '$(packageOutput)'
+    artifactName: 'nupkg'

@@ -30,5 +30,5 @@ steps:
 
 - script: dotnet nuget push "$(Build.ArtifactStagingDirectory)/*.nupkg" \
           --source "MyCompanyPackages" \
-          --api-key AzureArtifacts
+          --api-key Basys.EntApps.Core
   displayName: 'Publish package to Azure Artifacts'

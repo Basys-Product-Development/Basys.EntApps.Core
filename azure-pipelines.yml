@@ -26,7 +26,7 @@ steps:
 
 - task: NuGetAuthenticate@1
   inputs:
-    nuGetServiceConnections: 'MyFeedConnection'
+    nuGetServiceConnections: 'Basys.EntApps.Core'
 
 - script: dotnet nuget push "$(Build.ArtifactStagingDirectory)/*.nupkg" \
           --source "MyCompanyPackages" \

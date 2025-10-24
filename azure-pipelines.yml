@@ -28,8 +28,8 @@ steps:
 # ----------------------------
 # 2️⃣ Restore dependencies
 # ----------------------------
-- script: dotnet restore
-  displayName: 'Restore NuGet dependencies'
+#- script: dotnet restore
+#  displayName: 'Restore NuGet dependencies'
 
 # ----------------------------
 # 3️⃣ Build the project

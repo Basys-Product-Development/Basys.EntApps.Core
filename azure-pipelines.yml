@@ -1,0 +1,72 @@
+# ============================
+# Azure DevOps Pipeline
+# Build + Pack + Publish NuGet (.nupkg) to Azure Artifacts
+# ============================
+
+trigger:
+- main     # or your branch name
+
+pool:
+  vmImage: 'windows-latest'   # or 'ubuntu-latest'
+
+variables:
+  buildConfiguration: 'Release'
+  packageOutput: '$(Build.ArtifactStagingDirectory)/packages'
+  # Set the feed name exactly as it appears in Azure Artifacts
+  nugetFeed: 'Basys.EntApps.Core'
+  nuget: 'nuget.config'
+
+steps:
+# ----------------------------
+# 1️⃣ Install .NET SDK
+# ----------------------------
+- task: UseDotNet@2
+  displayName: 'Install .NET SDK'
+  inputs:
+    packageType: 'sdk'
+    version: '8.x'    # adjust to your .NET version
+
+# ----------------------------
+# 2️⃣ Restore dependencies
+# ----------------------------
+- script: dotnet restore '$(nuget)'
+  displayName: 'Restore NuGet dependencies'
+
+# ----------------------------
+# 3️⃣ Build the project
+# ----------------------------
+- script: dotnet build --configuration $(nuget) --no-restore
+  displayName: 'Build project'
+
+# ----------------------------
+# 4️⃣ Pack the project into a NuGet package
+# ----------------------------
+- script: dotnet pack --configuration $(nuget) --no-build \
+          --output $(packageOutput)
+  displayName: 'Create NuGet package'
+
+# ----------------------------
+# 5️⃣ Authenticate to Azure Artifacts feed
+# ----------------------------
+- task: NuGetAuthenticate@1
+  displayName: 'Authenticate to Azure Artifacts feed'
+  inputs:
+    nuGetServiceConnections: 'Basys.EntApps.Core'   # <-- service connection name
+
+# ----------------------------
+# 6️⃣ Push package to Azure Artifacts
+# ----------------------------
+- script: |
+    dotnet nuget push "$(packageOutput)/*.nupkg" \
+      --source "$(nugetFeed)" \
+      --api-key Basys.EntApps.Core
+  displayName: 'Publish package to Azure Artifacts feed'
+
+# ----------------------------
+# 7️⃣ (Optional) Publish .nupkg as pipeline artifact
+# ----------------------------
+- task: PublishBuildArtifacts@1
+  displayName: 'Save NuGet package as build artifact'
+  inputs:
+    pathToPublish: '$(packageOutput)'
+    artifactName: 'nupkg'

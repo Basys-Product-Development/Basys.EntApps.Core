@@ -43,9 +43,17 @@ steps:
 - script: dotnet build $(projectPath) --configuration $(buildConfiguration) --no-restore
   displayName: 'Build project'
 
-- script: dotnet pack $(projectPath) --configuration $(buildConfiguration) --no-build \
-          --output $(packageOutput)
-  displayName: 'Create NuGet package'
+#- script: dotnet pack $(projectPath) --configuration $(buildConfiguration) --no-build \
+ #         --output $(packageOutput)
+ # displayName: 'Create NuGet package'
+
+- task: NuGetCommand@2
+  inputs:
+    command: 'pack'
+    packagesToPack: 'Basys.EntApps.Core.sln'
+    versioningScheme: 'off'
+
+
 
 - script: |
     dotnet nuget push "$(packageOutput)/*.nupkg" \
@@ -59,8 +67,10 @@ steps:
     pathToPublish: '$(packageOutput)'
     artifactName: 'nupkg'
 
-- task: PublishBuildArtifacts@1
-  displayName: 'Save NuGet package as build artifact'
+
+
+- task: NuGetCommand@2
   inputs:
-    pathToPublish: '$(packageOutput)'
-    artifactName: 'nupkg'
+    command: 'pack'
+    packagesToPack: 'Basys.EntApps.Core.sln'
+    versioningScheme: 'off'

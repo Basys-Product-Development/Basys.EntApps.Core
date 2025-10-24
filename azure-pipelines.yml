@@ -14,57 +14,51 @@ variables:
   packageOutput: '$(Build.ArtifactStagingDirectory)/packages'
   # Set the feed name exactly as it appears in Azure Artifacts
   nugetFeed: 'Basys.EntApps.Core'
-  nuget: 'nuget.config'
+  projectPath: 'Basys.EntApps.Core.sln'
 
 steps:
-# ----------------------------
-# 1️⃣ Install .NET SDK
-# ----------------------------
 - task: UseDotNet@2
   displayName: 'Install .NET SDK'
   inputs:
     packageType: 'sdk'
     version: '8.x'    # adjust to your .NET version
 
-# ----------------------------
-# 2️⃣ Restore dependencies
-# ----------------------------
-- script: dotnet restore '$(nuget)'
-  displayName: 'Restore NuGet dependencies'
-
-# ----------------------------
-# 3️⃣ Build the project
-# ----------------------------
-- script: dotnet build --configuration $(nuget) --no-restore
-  displayName: 'Build project'
-
-# ----------------------------
-# 4️⃣ Pack the project into a NuGet package
-# ----------------------------
-- script: dotnet pack --configuration $(nuget) --no-build \
-          --output $(packageOutput)
-  displayName: 'Create NuGet package'
-
-# ----------------------------
-# 5️⃣ Authenticate to Azure Artifacts feed
-# ----------------------------
 - task: NuGetAuthenticate@1
   displayName: 'Authenticate to Azure Artifacts feed'
   inputs:
     nuGetServiceConnections: 'Basys.EntApps.Core'   # <-- service connection name
 
-# ----------------------------
-# 6️⃣ Push package to Azure Artifacts
-# ----------------------------
+#- script: dotnet restore '$(projectPath)'
+#  displayName: 'Restore NuGet dependencies'
+
+# Retore Nuget Packages
+- task: DotNetCoreCLI@2
+  inputs:
+    command: "restore"
+    projects: "$(projectPath)"
+    feedsToUse: "select"
+    vstsFeed: "44b649ef-0194-49de-bb1c-23d1459e80ee"
+  displayName: "Restore NuGet packages"
+
+- script: dotnet build $(projectPath) --configuration $(buildConfiguration) --no-restore
+  displayName: 'Build project'
+
+- script: dotnet pack $(projectPath) --configuration $(buildConfiguration) --no-build \
+          --output $(packageOutput)
+  displayName: 'Create NuGet package'
+
 - script: |
     dotnet nuget push "$(packageOutput)/*.nupkg" \
       --source "$(nugetFeed)" \
-      --api-key Basys.EntApps.Core
+      --api-key AzureArtifacts
   displayName: 'Publish package to Azure Artifacts feed'
 
-# ----------------------------
-# 7️⃣ (Optional) Publish .nupkg as pipeline artifact
-# ----------------------------
+- task: PublishBuildArtifacts@1
+  displayName: 'Save NuGet package as build artifact'
+  inputs:
+    pathToPublish: '$(packageOutput)'
+    artifactName: 'nupkg'
+
 - task: PublishBuildArtifacts@1
   displayName: 'Save NuGet package as build artifact'
   inputs:
